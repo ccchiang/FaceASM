@@ -685,7 +685,7 @@ function pushbutton14_Callback(hObject, eventdata, handles)
 if isfield(handles, 'warpImg') && isfield(handles, 'aligned')
     GrayIn = rgb2gray(handles.warpImg);
     InitXYs = handles.aligned;
-    SearchWSize = 60;
+    SearchWSize = 80;
     load('AlignedImages\EigFeatMean.mat');
     load('AlignedImages\EigFeatStd.mat');
     Template = EigMeanData;
