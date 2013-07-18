@@ -1,0 +1,17 @@
+close all;
+clear all;
+f = openfig('rectify.fig');
+[assocVec assocTable allMarkPos meanMarkX meanMarkY] = trainAssoc('assoc.txt','landmarks.txt');
+pid = 1;
+markPos = allMarkPos(:, (pid-1)*2+1:(pid-1)*2+2);
+newMarkPos = perturb(markPos, 10);
+data =guihandles(f);
+data.fig = f;
+data.allMarkPos = allMarkPos;
+data.markPos = newMarkPos;
+data.meanMarkX = meanMarkX;
+data.meanMarkY = meanMarkY;
+data.assocVec = assocVec;
+data.assocTable = assocTable;
+guidata(f, data);
+plot(data.faceAxes, newMarkPos(:,1), 60-newMarkPos(:,2), 'o', meanMarkX, 60-meanMarkY, '+');
