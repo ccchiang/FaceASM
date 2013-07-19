@@ -713,7 +713,7 @@ if isfield(handles, 'warpImg') && isfield(handles, 'aligned')
         handles.aligned = handles.Recon;
         InitXYs = handles.aligned;
         if (rem(kkk,3)==0)
-            SearchWSize = SearchWSize - 1;
+            SearchWSize = SearchWSize - 4;
         end
         kkk = kkk + 1;
         handles.Errs = Errs;

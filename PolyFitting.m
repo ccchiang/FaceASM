@@ -11,7 +11,7 @@ for i=1:len
 end
 out = pinv(A)*Y;
 val = A*out;
-[xx yy val]
+% [xx yy val]
 MaxIter = 5;
 while iter <= MaxIter
     err = abs(val-yy);
@@ -30,7 +30,7 @@ while iter <= MaxIter
     coeff = pinv(AA)*YY;
     val = A*coeff;
     iter = iter + 1
-    [xx yy val]
+%     [xx yy val];
 end
 val = polyval(coeff, xx);
 err = abs(yy-val);
