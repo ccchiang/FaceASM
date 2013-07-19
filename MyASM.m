@@ -211,7 +211,7 @@ for i=1:NoOfData
     Img = imread(AlignedFileNameList{i});
     Img = rgb2gray(Img);
     for j=1:NoOfLandmarks
-        FeatData(i, :, j) = reshape(Img(xy(j,2)-S*d:S:xy(j,2)+S*d,xy(j,1)-S*d:S:xy(j,1)+S*d), [1 WindowSize*WindowSize]);
+        FeatData(i, :, j) = FeatExtract(xy(j,1),xy(j,2),Img,S,d,WindowSize);%reshape(Img(xy(j,2)-S*d:S:xy(j,2)+S*d,xy(j,1)-S*d:S:xy(j,1)+S*d), [1 WindowSize*WindowSize]);
     end
     waitbar(i / NoOfData, h, [num2str(i) '/' num2str(NoOfData)]);
 end

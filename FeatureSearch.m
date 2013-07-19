@@ -17,8 +17,8 @@ if (SearchType==2)
         if ((yyy-S*sz)<1||(xxx-S*sz)<1||(yyy+S*sz)>h||(xxx+S*sz)>w)
             continue;
         end
-        Feat = reshape(double(Img(yyy-S*sz:S:yyy+S*sz, xxx-S*sz:S:xxx+S*sz)),[1 FeatWndSize*FeatWndSize]);
-        Feat = Feat./norm(Feat);
+        Feat = FeatExtract(xxx,yyy,Img,S,sz,FeatWndSize);%reshape(double(Img(yyy-S*sz:S:yyy+S*sz, xxx-S*sz:S:xxx+S*sz)),[1 FeatWndSize*FeatWndSize]);
+        %Feat = Feat./norm(Feat);
         MatchScore = sum(abs(Feat-Template)./TemplateStd);
         ScoreMap(yyy-InitPt(2)+p+1, xxx-InitPt(1)+p+1) = exp(-0.04*MatchScore);
         if (MatchScore < BestMatchScore)
@@ -32,8 +32,8 @@ else
             if ((yyy-S*sz)<1||(xxx-S*sz)<1||(yyy+S*sz)>h||(xxx+S*sz)>w)
                 continue;
             end
-            Feat = reshape(double(Img(yyy-S*sz:S:yyy+S*sz, xxx-S*sz:S:xxx+S*sz)),[1 FeatWndSize*FeatWndSize]);
-            Feat = Feat./norm(Feat);
+            Feat = FeatExtract(xxx,yyy,Img,S,sz,FeatWndSize);%reshape(double(Img(yyy-S*sz:S:yyy+S*sz, xxx-S*sz:S:xxx+S*sz)),[1 FeatWndSize*FeatWndSize]);
+            %Feat = Feat./norm(Feat);
             MatchScore = sum(abs(Feat-Template)./TemplateStd);
             ScoreMap(yyy-InitPt(2)+p+1, xxx-InitPt(1)+p+1) = exp(-0.04*MatchScore);
             if (MatchScore < BestMatchScore)

@@ -23,8 +23,8 @@ for n=1:NoOfLandmarks
                 if ((yyy-S*sz)<1||(xxx-S*sz)<1||(yyy+S*sz)>h||(xxx+S*sz)>w)
                     continue;
                 end
-                Feat = reshape(double(GrayImg(yyy-S*sz:S:yyy+S*sz, xxx-S*sz:S:xxx+S*sz)),[1 FeatWSize*FeatWSize]);
-                Feat = Feat./norm(Feat);
+                Feat = FeatExtract(xxx,yyy,GrayImg,S,sz,FeatWSize);%reshape(double(GrayImg(yyy-S*sz:S:yyy+S*sz, xxx-S*sz:S:xxx+S*sz)),[1 FeatWSize*FeatWSize]);
+                %Feat = Feat./norm(Feat);
                 MatchScore = sum(abs(Feat-Templates(n,:))./TemplateStds(n,:));
                 if (MatchScore < BestMatchScore)
                     BestMatchScore = MatchScore;
@@ -49,8 +49,8 @@ for n=1:NoOfLandmarks
                 NodeErrs(n, np+p+1) = 999999.0;
                 continue;
             end
-            Feat = reshape(double(GrayImg(yyy-S*sz:S:yyy+S*sz, xxx-S*sz:S:xxx+S*sz)),[1 FeatWSize*FeatWSize]);
-            Feat = Feat./norm(Feat);
+            Feat = FeatExtract(xxx,yyy,GrayImg,S,sz,FeatWSize);%reshape(double(GrayImg(yyy-S*sz:S:yyy+S*sz, xxx-S*sz:S:xxx+S*sz)),[1 FeatWSize*FeatWSize]);
+            %Feat = Feat./norm(Feat);
             MatchScore = sum(abs(Feat-Templates(n,:))./TemplateStds(n,:));
             NodeErrs(n, np+p+1) = MatchScore;
             if (MatchScore < BestMatchScore)
