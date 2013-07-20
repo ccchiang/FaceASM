@@ -9,10 +9,10 @@ for i=1:len
     end
     Y(i) = yy(i);
 end
-out = pinv(A)*Y;
-val = A*out;
+coeff = pinv(A)*Y;
+val = A*coeff;
 % [xx yy val]
-MaxIter = 5;
+MaxIter = 0;
 while iter <= MaxIter
     err = abs(val-yy);
     flag = err<=(MaxIter-iter)/2+1;
@@ -38,22 +38,43 @@ ind = (find(err<=th));
 xxx = (xx(err<=th));
 n = length(ind);
 outXs = xx;
-for i = 1:n-1
-    dx = (xxx(i+1)-xxx(i))/(ind(i+1)-ind(i));
-    for j=ind(i)+1:ind(i+1)-1
-        outXs(j) = outXs(j-1) + dx; 
+outYs = yy;
+for i=1:n
+    if ind(i)==1
+        dir = [xx(1)-xx(2) yy(1)-yy(2)];
+    elseif ind(i) ==len
+        dir = [xx(len-1)-xx(len) yy(len-1)-yy(len)];
+    else
+        dir = [xx(ind(i)-1)-xx(ind(i)) yy(ind(i)-1)-yy(ind(i))];
     end
+    normalDir = [-dir(2) dir(1)];
+    normalDir = 0.5*normalDir/norm(normalDir);
+    delta = 20;
+    range = [-delta:delta];
+    xs = xx(ind(i))+range*normalDir(1);
+    ys = yy(ind(i))+range*normalDir(2);
+    err = abs(polyval(coeff, xs)-ys);
+    outXs(ind(i)) = xs(err==min(err));
+    %outYs(ind(i)) = ys(err==min(err));
 end
-if ind(1)~=1
-    for j=ind(1)-1:-1:1
-        outXs(j) = outXs(j+1) - dx;
-    end
-end
-if ind(n)~=length(xx)
-    for j=ind(n)+1:length(xx)
-        outXs(j) = outXs(j-1) + dx;
-    end
-end
-
 outYs = polyval(coeff, outXs);
-plot(xx,yy,'gx-',xx,val,'r-', outXs, outYs, 'bo-');
+%[outXs xx outYs yy]
+% for i = 1:n-1
+%     dx = (xxx(i+1)-xxx(i))/(ind(i+1)-ind(i));
+%     for j=ind(i)+1:ind(i+1)-1
+%         outXs(j) = outXs(j-1) + dx; 
+%     end
+% end
+% if ind(1)~=1
+%     for j=ind(1)-1:-1:1
+%         outXs(j) = outXs(j+1) - dx;
+%     end
+% end
+% if ind(n)~=length(xx)
+%     for j=ind(n)+1:length(xx)
+%         outXs(j) = outXs(j-1) + dx;
+%     end
+% end
+% 
+% outYs = polyval(coeff, outXs);
+% plot(xx,yy,'gx-',xx,val,'r-', outXs, outYs, 'bo-');

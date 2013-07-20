@@ -1,16 +1,16 @@
 function DrawShape(Shape, Color, Marker, Line, LineWidth)
 XYs = reshape(Shape, [1 length(Shape)]);
-jawx = XYs(1:2:26);
-jawy = XYs(2:2:26);
+jawx = [XYs(77) XYs(1:2:26) XYs(67)];
+jawy = [XYs(78) XYs(2:2:26) XYs(68) ];
 nosex = XYs(103:2:128);
 nosey = XYs(104:2:128);
 LineStyle = [Color Marker Line];
 hold on;
 plot(nosex, nosey, LineStyle, jawx, jawy, LineStyle, 'LineWidth', LineWidth);
-rbrowx = XYs(59:2:68);
-rbrowy = XYs(60:2:68);
-lbrowx = XYs(69:2:78);
-lbrowy = XYs(70:2:78);
+rbrowx = XYs(59:2:66);
+rbrowy = XYs(60:2:66);
+lbrowx = XYs(69:2:76);
+lbrowy = XYs(70:2:76);
 plot(lbrowx, lbrowy, LineStyle, rbrowx, rbrowy, LineStyle, 'LineWidth', LineWidth);
 reyex = [XYs(27:2:42) XYs(27)];
 reyey = [XYs(28:2:42) XYs(28)];

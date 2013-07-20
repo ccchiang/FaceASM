@@ -51,7 +51,8 @@ function MyASM_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to MyASM (see VARARGIN)
 % Choose default command line output for MyASM
-global S
+global S 
+global LandmarkGroups;
 handles.output = hObject;
 load('AlignedImages\All_Mesh.txt');
 handles.ShapeData = All_Mesh;
@@ -64,6 +65,22 @@ handles.EigVec = EigenFaceVec;
 handles.EigVal = EigenFaceValue;
 handles.Mean = MeanFace;
 S = 2;
+LandmarkGroups={[35:39, 52] ... %1: Right eyebrow
+                              [64 30:34], ... %2: Left eyebrow
+                              22:29, ...%3: Right eye
+                              14:21, ...%4: Left eye
+                              [26:29 22],... %5: Right upper eyelid
+                              22:26,... %6: Right lower eyelid
+                              [18:21 14],... %7: Left upper eyelid
+                              14:18,... %8: Right lower eyelid
+                              52:64,... %9: Nose
+                              52:56,... %10: Nose right bondry
+                              60:64,... %11: Nose left bndry
+                              40:51,... %12: Mouth
+                              [40:42 44:46],... %13: Mouth upper bndry
+                              [46:51 40],... %14: Mouth lower bondry
+                              [1:13] %15: Jaw
+                              };
 guidata(hObject, handles);
 
 % UIWAIT makes MyASM wait for user response (see UIRESUME)
@@ -685,7 +702,7 @@ function pushbutton14_Callback(hObject, eventdata, handles)
 if isfield(handles, 'warpImg') && isfield(handles, 'aligned')
     GrayIn = rgb2gray(handles.warpImg);
     InitXYs = handles.aligned;
-    SearchWSize = 80;
+    SearchWSize = 100;
     load('AlignedImages\EigFeatMean.mat');
     load('AlignedImages\EigFeatStd.mat');
     Template = EigMeanData;
@@ -697,8 +714,11 @@ if isfield(handles, 'warpImg') && isfield(handles, 'aligned')
         hold off;
         HighLightMark(handles);
         hold on;
-        LX = Xs; %XYs(1:2:length(XYs));
-        LY = Ys; %XYs(2:2:length(XYs));
+        facialParts = [1 2 5 6 7 8 13 14 15]; %Jaw part
+        orders = [3 3 3 3 3 3 3 3 3];
+        [newXs newYs] = RefineLandmarks(facialParts, orders, Xs, Ys);
+        LX = newXs; %XYs(1:2:length(XYs));
+        LY = newYs; %XYs(2:2:length(XYs));
         plot(LX, LY, 'y*');
         LXYs = reshape([LX;LY], [length(LX)*2 1]);
         DrawShape(LXYs, 'y', '', '-', 2);
@@ -713,7 +733,7 @@ if isfield(handles, 'warpImg') && isfield(handles, 'aligned')
         handles.aligned = handles.Recon;
         InitXYs = handles.aligned;
         if (rem(kkk,3)==0)
-            SearchWSize = SearchWSize - 4;
+            SearchWSize = SearchWSize - 5;
         end
         kkk = kkk + 1;
         handles.Errs = Errs;
