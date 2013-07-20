@@ -48,8 +48,8 @@ for i=1:n
         dir = [xx(ind(i)-1)-xx(ind(i)) yy(ind(i)-1)-yy(ind(i))];
     end
     normalDir = [-dir(2) dir(1)];
-    normalDir = 0.5*normalDir/norm(normalDir);
-    delta = 20;
+    normalDir = normalDir/norm(normalDir);
+    delta = 10;
     range = [-delta:delta];
     xs = xx(ind(i))+range*normalDir(1);
     ys = yy(ind(i))+range*normalDir(2);

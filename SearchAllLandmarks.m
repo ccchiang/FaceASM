@@ -1,6 +1,7 @@
-function [XYs Errs NewXs NewYs] = SearchAllLandmarks(GrayImg, InitXYs, SearchWSize, FeatWSize, Templates, TemplateStds, SearchType)
+function [XYs Errs NewXs NewYs] = SearchAllLandmarks(GrayI, InitXYs, SearchWSize, FeatWSize, Templates, TemplateStds, SearchType)
 global S
-[h w] = size(GrayImg);
+[h w] = size(GrayI);
+GrayImg = cv.bilateralFilter(GrayI, 'SigmaColor', 60, 'Diameter', 11);
 p =SearchWSize/2;
 XYs = InitXYs;
 sz = floor(FeatWSize/2);

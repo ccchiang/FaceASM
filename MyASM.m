@@ -64,15 +64,15 @@ load('AlignedImages/MeanFace.txt');
 handles.EigVec = EigenFaceVec;
 handles.EigVal = EigenFaceValue;
 handles.Mean = MeanFace;
-S = 2;
+S = 3;
 LandmarkGroups={[35:39, 52] ... %1: Right eyebrow
                               [64 30:34], ... %2: Left eyebrow
                               22:29, ...%3: Right eye
                               14:21, ...%4: Left eye
-                              [26:29 22],... %5: Right upper eyelid
-                              22:26,... %6: Right lower eyelid
-                              [18:21 14],... %7: Left upper eyelid
-                              14:18,... %8: Right lower eyelid
+                              [26:29 22 53],... %5: Right upper eyelid
+                              [52 22:26],... %6: Right lower eyelid
+                              [18:21 14 63],... %7: Left upper eyelid
+                              [64 14:18],... %8: Right lower eyelid
                               52:64,... %9: Nose
                               52:56,... %10: Nose right bondry
                               60:64,... %11: Nose left bndry
@@ -227,8 +227,9 @@ for i=1:NoOfData
     xy =floor( [All_Aligned(i, 1:2:NoOfLandmarks*2)' All_Aligned(i, 2:2:NoOfLandmarks*2)']);
     Img = imread(AlignedFileNameList{i});
     Img = rgb2gray(Img);
+    I = cv.bilateralFilter(Img, 'SigmaColor', 60, 'Diameter', 11);
     for j=1:NoOfLandmarks
-        FeatData(i, :, j) = FeatExtract(xy(j,1),xy(j,2),Img,S,d,WindowSize);%reshape(Img(xy(j,2)-S*d:S:xy(j,2)+S*d,xy(j,1)-S*d:S:xy(j,1)+S*d), [1 WindowSize*WindowSize]);
+        FeatData(i, :, j) = FeatExtract(xy(j,1),xy(j,2),I,S,d,WindowSize);%reshape(Img(xy(j,2)-S*d:S:xy(j,2)+S*d,xy(j,1)-S*d:S:xy(j,1)+S*d), [1 WindowSize*WindowSize]);
     end
     waitbar(i / NoOfData, h, [num2str(i) '/' num2str(NoOfData)]);
 end
@@ -721,7 +722,7 @@ if isfield(handles, 'warpImg') && isfield(handles, 'aligned')
         LY = newYs; %XYs(2:2:length(XYs));
         plot(LX, LY, 'y*');
         LXYs = reshape([LX;LY], [length(LX)*2 1]);
-        DrawShape(LXYs, 'y', '', '-', 2);
+        %DrawShape(LXYs, 'y', '', '-', 2);
         handles.BestXYs = LXYs';
         d = (reshape(handles.BestXYs, [1 length(handles.BestXYs)]) - handles.Mean');
         bound = max(handles.EigVal, zeros(size(handles.EigVal,1), size(handles.EigVal,2)));

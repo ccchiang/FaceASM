@@ -1,6 +1,7 @@
-function [BestPt ScoreMap] = FeatureSearch(Img, InitPt, HWndSize, FeatWndSize, Template, TemplateStd, Skip, SearchType)
+function [BestPt ScoreMap] = FeatureSearch(I, InitPt, HWndSize, FeatWndSize, Template, TemplateStd, Skip, SearchType)
 global S
-[w h c] = size(Img);
+[w h c] = size(I);
+Img = cv.bilateralFilter(I, 'SigmaColor', 60, 'Diameter', 11);
 p =HWndSize;
 BestPt = InitPt;
 sz = floor(FeatWndSize/2);
