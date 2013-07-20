@@ -79,7 +79,8 @@ LandmarkGroups={[35:39, 52] ... %1: Right eyebrow
                               40:51,... %12: Mouth
                               [40:42 44:46],... %13: Mouth upper bndry
                               [46:51 40],... %14: Mouth lower bondry
-                              [1:13] %15: Jaw
+                              [1:13], ... %15: Jaw
+                              [1 55 61 13], ... %16: nosetril-jaw
                               };
 guidata(hObject, handles);
 
@@ -715,8 +716,8 @@ if isfield(handles, 'warpImg') && isfield(handles, 'aligned')
         hold off;
         HighLightMark(handles);
         hold on;
-        facialParts = [1 2 5 6 7 8 13 14 15]; %Jaw part
-        orders = [3 3 3 3 3 3 3 3 3];
+        facialParts = [1 2 5 6 7 8 13 14 15 16]; %Jaw part
+        orders = [3 3 3 3 3 3 3 3 3 3];
         [newXs newYs] = RefineLandmarks(facialParts, orders, Xs, Ys);
         LX = newXs; %XYs(1:2:length(XYs));
         LY = newYs; %XYs(2:2:length(XYs));
@@ -724,12 +725,13 @@ if isfield(handles, 'warpImg') && isfield(handles, 'aligned')
         LXYs = reshape([LX;LY], [length(LX)*2 1]);
         %DrawShape(LXYs, 'y', '', '-', 2);
         handles.BestXYs = LXYs';
+        alpha = 1.0;
         d = (reshape(handles.BestXYs, [1 length(handles.BestXYs)]) - handles.Mean');
         bound = max(handles.EigVal, zeros(size(handles.EigVal,1), size(handles.EigVal,2)));
-        b = min(max(d*handles.EigVec,-1*sqrt(bound')),1*sqrt(bound'));
+        b = min(max(d*handles.EigVec,-alpha*sqrt(bound')),alpha*sqrt(bound'));
         k = round(128*1);
         ReconstructedShape = b(1:k) * handles.EigVec(:,1:k)' + handles.Mean';
-        DrawShape(ReconstructedShape, 'b', '', '-', 2);
+        DrawShape(ReconstructedShape, 'b', '', '-o', 2);
         handles.Recon = ReconstructedShape;
         handles.aligned = handles.Recon;
         InitXYs = handles.aligned;
