@@ -54,6 +54,7 @@ function MyASM_OpeningFcn(hObject, eventdata, handles, varargin)
 global S 
 global LandmarkGroups;
 global AlignedFileNameList;
+global FacialPartName;
 handles.output = hObject;
 load('AlignedImages\All_Mesh.txt');
 handles.ShapeData = All_Mesh;
@@ -73,18 +74,21 @@ LandmarkGroups={[35:39, 52] ... %1: Right eyebrow
                               [26:29 22 53],... %5: Right upper eyelid
                               [52 22:26],... %6: Right lower eyelid
                               [18:21 14 63],... %7: Left upper eyelid
-                              [64 14:18],... %8: Right lower eyelid
+                              [64 14:18],... %8: Left lower eyelid
                               52:64,... %9: Nose
                               52:55,... %10: Nose right bondry
                               61:64,... %11: Nose left bndry
                               40:51,... %12: Mouth
                               [40:42 44:46],... %13: Mouth upper bndry
                               [46:51 40],... %14: Mouth lower bondry
-                              [1:13], ... %15: Jaw
-                              [1 55 61 13], ... %16: nosetril-jaw
+                              1:13, ... %15: Jaw
+                              [1 55 61 13] ... %16: nosetril-jaw
                               [52 53 54 57] ... %17: right nose bndry
                               [64 63 62 60] ... %18: left nose bndry
                               };
+FacialPartName = {'r_eyebrow', 'l_eyebrow', 'r_eye', 'l_eye', 'r_u_eyelid', 'r_l_eyelid', ...
+                              'l_u_eyelid', 'l_u_eyelid', 'nose', 'nose_rbndry', 'nose_lbndry', 'mouth', ...
+                              'u_lip', 'l_lip', 'jaw', 'nosetril-jaw', };         
 AlignedFileNameList = load('AlignedImages\AlignedFileNameList.mat'); % load the AlignFileNameList variable into memory                          
 guidata(hObject, handles);
 
