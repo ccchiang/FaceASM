@@ -57,7 +57,7 @@ while iter < MAX_ITER
     diffy = Diff(2:2:length(Diff));
     diff = sqrt(diffx + diffy);
     diff = reshape([diff;diff], [1 2*length(diff)]);
-    ind = diff<=6;
+    ind = diff<=10;
     npts = sum(ind)
     if npts <lastnpts || nochange==5
         break;

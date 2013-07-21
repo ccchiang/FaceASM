@@ -22,7 +22,7 @@ function varargout = MyASM(varargin)
 
 % Edit the above text to modify the response to help MyASM
 
-% Last Modified by GUIDE v2.5 29-Jun-2012 07:56:40
+% Last Modified by GUIDE v2.5 21-Jul-2013 10:31:26
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -53,6 +53,7 @@ function MyASM_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for MyASM
 global S 
 global LandmarkGroups;
+global AlignedFileNameList;
 handles.output = hObject;
 load('AlignedImages\All_Mesh.txt');
 handles.ShapeData = All_Mesh;
@@ -74,14 +75,17 @@ LandmarkGroups={[35:39, 52] ... %1: Right eyebrow
                               [18:21 14 63],... %7: Left upper eyelid
                               [64 14:18],... %8: Right lower eyelid
                               52:64,... %9: Nose
-                              52:56,... %10: Nose right bondry
-                              60:64,... %11: Nose left bndry
+                              52:55,... %10: Nose right bondry
+                              61:64,... %11: Nose left bndry
                               40:51,... %12: Mouth
                               [40:42 44:46],... %13: Mouth upper bndry
                               [46:51 40],... %14: Mouth lower bondry
                               [1:13], ... %15: Jaw
                               [1 55 61 13], ... %16: nosetril-jaw
+                              [52 53 54 57] ... %17: right nose bndry
+                              [64 63 62 60] ... %18: left nose bndry
                               };
+AlignedFileNameList = load('AlignedImages\AlignedFileNameList.mat'); % load the AlignFileNameList variable into memory                          
 guidata(hObject, handles);
 
 % UIWAIT makes MyASM wait for user response (see UIRESUME)
@@ -189,6 +193,7 @@ function pushbutton2_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton2 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global AlignedFileNameList;
 load('AlignedImages\All_Aligned.txt'); % load the All_Aligned variable
 [V,D]=eig(cov(All_Aligned));
 MeanMesh = mean(All_Aligned);
@@ -216,7 +221,7 @@ function pushbutton3_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 global S
-load('AlignedImages\AlignedFileNameList.mat'); % load the AlignFileNameList variable into memory
+global AlignedFileNameList
 NoOfData = length(AlignedFileNameList);
 load('AlignedImages\All_Aligned.txt');
 NoOfLandmarks = length(All_Aligned(1,:))/2;
@@ -704,45 +709,63 @@ function pushbutton14_Callback(hObject, eventdata, handles)
 if isfield(handles, 'warpImg') && isfield(handles, 'aligned')
     GrayIn = rgb2gray(handles.warpImg);
     InitXYs = handles.aligned;
-    SearchWSize = 100;
+    SearchWSize = 50;
     load('AlignedImages\EigFeatMean.mat');
     load('AlignedImages\EigFeatStd.mat');
     Template = EigMeanData;
     TemplateStd = EigStdData;
     axes(handles.WarpAxe);
     kkk = 1;
-    while SearchWSize>=12
+    set(handles.text1, 'String', 'Tracking started!');
+    set(handles.text1, 'ForegroundColor', [1 0 0]);
+    drawnow;
+    while SearchWSize>=4
         [XYs Errs Xs Ys] = SearchAllLandmarksByDP(GrayIn, InitXYs, SearchWSize, sqrt(length(Template(1,:))), Template, TemplateStd);
         hold off;
-        HighLightMark(handles);
+        imshow(handles.warpImg);
+        if get(handles.checkbox2, 'value')==1
+            HighLightMark(handles);
+        end
         hold on;
-        facialParts = [1 2 5 6 7 8 13 14 15 16]; %Jaw part
-        orders = [3 3 3 3 3 3 3 3 3 3];
+        facialParts = [1 2 5 6 7 8 13 14 15]; %Jaw part
+        orders = [3 3 3 3 3 3 3 3 3 4];
         [newXs newYs] = RefineLandmarks(facialParts, orders, Xs, Ys);
         LX = newXs; %XYs(1:2:length(XYs));
         LY = newYs; %XYs(2:2:length(XYs));
-        plot(LX, LY, 'y*');
+        if get(handles.checkbox2, 'value')==1
+            plot(LX, LY, 'y*');
+        end
         LXYs = reshape([LX;LY], [length(LX)*2 1]);
-        %DrawShape(LXYs, 'y', '', '-', 2);
+%         if get(handles.checkbox2, 'value')==1
+%             DrawShape(LXYs, 'y', '', '-', 2);
+%         end
         handles.BestXYs = LXYs';
-        alpha = 1.0;
+        alpha = 0.8;
         d = (reshape(handles.BestXYs, [1 length(handles.BestXYs)]) - handles.Mean');
         bound = max(handles.EigVal, zeros(size(handles.EigVal,1), size(handles.EigVal,2)));
         b = min(max(d*handles.EigVec,-alpha*sqrt(bound')),alpha*sqrt(bound'));
         k = round(128*1);
         ReconstructedShape = b(1:k) * handles.EigVec(:,1:k)' + handles.Mean';
-        DrawShape(ReconstructedShape, 'b', '', '-o', 2);
+        if get(handles.checkbox2, 'value')==1
+            lineStyle = 'o-';
+        else
+            lineStyle = '-';
+        end
+        DrawShape(LXYs, 'y', '', lineStyle, 2);
+        %DrawShape(ReconstructedShape, 'g', '', lineStyle, 2);
         handles.Recon = ReconstructedShape;
         handles.aligned = handles.Recon;
         InitXYs = handles.aligned;
         if (rem(kkk,3)==0)
-            SearchWSize = SearchWSize - 5;
+            SearchWSize = SearchWSize - 2;
         end
         kkk = kkk + 1;
         handles.Errs = Errs;
         drawnow;
     end
     hold off;
+    set(handles.text1, 'String', 'Tracking finished!');
+    set(handles.text1, 'ForegroundColor', [0 0 1]);
 end
 
 % --- Executes on button press in pushbutton15.
@@ -819,3 +842,21 @@ function pushbutton15_Callback(hObject, eventdata, handles)
         drawnow;
     end
     hold off;
+
+
+% --- Executes on button press in checkbox1.
+function checkbox1_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox1
+
+
+% --- Executes on button press in checkbox2.
+function checkbox2_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox2
