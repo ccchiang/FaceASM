@@ -22,7 +22,7 @@ function varargout = MyASM(varargin)
 
 % Edit the above text to modify the response to help MyASM
 
-% Last Modified by GUIDE v2.5 21-Jul-2013 10:31:26
+% Last Modified by GUIDE v2.5 21-Jul-2013 18:29:17
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -51,10 +51,11 @@ function MyASM_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to MyASM (see VARARGIN)
 % Choose default command line output for MyASM
-global S 
+global S
 global LandmarkGroups;
 global AlignedFileNameList;
 global FacialPartName;
+global ComponentGroups;
 handles.output = hObject;
 load('AlignedImages\All_Mesh.txt');
 handles.ShapeData = All_Mesh;
@@ -68,28 +69,30 @@ handles.EigVal = EigenFaceValue;
 handles.Mean = MeanFace;
 S = 3;
 LandmarkGroups={[35:39, 52] ... %1: Right eyebrow
-                              [64 30:34], ... %2: Left eyebrow
-                              22:29, ...%3: Right eye
-                              14:21, ...%4: Left eye
-                              [26:29 22 53],... %5: Right upper eyelid
-                              [52 22:26],... %6: Right lower eyelid
-                              [18:21 14 63],... %7: Left upper eyelid
-                              [64 14:18],... %8: Left lower eyelid
-                              52:64,... %9: Nose
-                              52:55,... %10: Nose right bondry
-                              61:64,... %11: Nose left bndry
-                              40:51,... %12: Mouth
-                              [40:42 44:46],... %13: Mouth upper bndry
-                              [46:51 40],... %14: Mouth lower bondry
-                              1:13, ... %15: Jaw
-                              [1 55 61 13] ... %16: nosetril-jaw
-                              [52 53 54 57] ... %17: right nose bndry
-                              [64 63 62 60] ... %18: left nose bndry
-                              };
+    [64 30:34], ... %2: Left eyebrow
+    22:29, ...%3: Right eye
+    14:21, ...%4: Left eye
+    [26:29 22 53],... %5: Right upper eyelid
+    [52 22:26],... %6: Right lower eyelid
+    [18:21 14 63],... %7: Left upper eyelid
+    [64 14:18],... %8: Left lower eyelid
+    52:64,... %9: Nose
+    52:55,... %10: Nose right bondry
+    61:64,... %11: Nose left bndry
+    40:51,... %12: Mouth
+    [40:42 44:46],... %13: Mouth upper bndry
+    [46:51 40],... %14: Mouth lower bondry
+    1:13, ... %15: Jaw
+    [1 55 61 13] ... %16: nosetril-jaw
+    [52 53 54 57] ... %17: right nose bndry
+    [64 63 62 60] ... %18: left nose bndry
+    };
+ComponentGroups = {0, [3,4], [1,2,3,4], [1,2,3,4,9,12], [1,2,3,4,9,12,15], 9, [3, 4, 9], [1, 2, 3, 4, 9],...
+    [9, 12], [9, 12, 15], 12, [12, 15], 15};
 FacialPartName = {'r_eyebrow', 'l_eyebrow', 'r_eye', 'l_eye', 'r_u_eyelid', 'r_l_eyelid', ...
-                              'l_u_eyelid', 'l_u_eyelid', 'nose', 'nose_rbndry', 'nose_lbndry', 'mouth', ...
-                              'u_lip', 'l_lip', 'jaw', 'nosetril-jaw', };         
-AlignedFileNameList = load('AlignedImages\AlignedFileNameList.mat'); % load the AlignFileNameList variable into memory                          
+    'l_u_eyelid', 'l_u_eyelid', 'nose', 'nose_rbndry', 'nose_lbndry', 'mouth', ...
+    'u_lip', 'l_lip', 'jaw', 'nosetril-jaw', };
+AlignedFileNameList = load('AlignedImages\AlignedFileNameList.mat'); % load the AlignFileNameList variable into memory
 guidata(hObject, handles);
 
 % UIWAIT makes MyASM wait for user response (see UIRESUME)
@@ -197,24 +200,46 @@ function pushbutton2_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton2 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global AlignedFileNameList;
-load('AlignedImages\All_Aligned.txt'); % load the All_Aligned variable
-[V,D]=eig(cov(All_Aligned));
-MeanMesh = mean(All_Aligned);
-MeanMesh = MeanMesh';
-newV=[];
-[lambda, I] = sort(diag(D),'descend');% 將特徵值 從大排到小
-N = length(lambda);
-for j=1:N
-    newV=horzcat(newV,V(:,I(j:j):I(j:j)));  %根據特徵值大小  將特徵向量從大排到小
+global ComponentGroups;
+global LandmarkGroups;
+set(handles.text1, 'String', 'PCA shape training started.');
+set(handles.text1, 'Foreground', [1 0 0]);
+drawnow;
+SelectedGroups = get(handles.listbox2, 'Value');
+NoGroups = length(SelectedGroups);
+if NoGroups == 0
+    set(handles.text1, 'String', 'Please select the component group(s) to train your PCA(2).');
+    set(handles.text1, 'Foreground', [1 0 0]);
+    return;
 end
-save('AlignedImages\MeanFace.txt', '-ascii', 'MeanMesh');
-save('AlignedImages\EigenFaceValue.txt', '-ascii', 'lambda');
-save('AlignedImages\EigenFaceVec.txt', '-ascii', 'newV');
-handles.EigVec = newV;
-handles.EigVal = lambda;
-handles.Mean = MeanMesh;
-set(handles.text1, 'String', 'PCA finished.');
+contents = cellstr(get(handles.listbox2,'String')) ;
+All_Aligned = load('AlignedImages\All_Aligned.txt'); % load the All_Aligned variable
+for g = 1:NoGroups
+    landmarkIDs = GetLandmarksForComponentGroup(SelectedGroups(g));
+    landmarks = reshape([2*landmarkIDs-1;2*landmarkIDs], [1 2*length(landmarkIDs)]);
+    landmarks = sort(landmarks);
+    [V,D]=eig(cov(All_Aligned(:,landmarks)));
+    MeanMesh = mean(All_Aligned(:,landmarks));
+    MeanMesh = MeanMesh';
+    newV=[];
+    [lambda, I] = sort(diag(D),'descend');% 將特徵值 從大排到小
+    N = length(lambda);
+    for j=1:N
+        newV=horzcat(newV,V(:,I(j:j):I(j:j)));  %根據特徵值大小  將特徵向量從大排到小
+    end
+    GName = contents{SelectedGroups(g)};
+    save(['AlignedImages\' GName '_MeanFace.txt'], '-ascii', 'MeanMesh');
+    save(['AlignedImages\' GName '_EigenFaceValue.txt'], '-ascii', 'lambda');
+    save(['AlignedImages\' GName '_EigenFaceVec.txt'], '-ascii', 'newV');
+    if SelectedGroups(g)==0
+        handles.EigVec = newV;
+        handles.EigVal = lambda;
+        handles.Mean = MeanMesh;
+    end
+end
+set(handles.text1, 'String', 'PCA shape training finished.');
+set(handles.text1, 'Foreground', [0 0 1]);
+drawnow;
 guidata(hObject, handles);
 
 
@@ -268,15 +293,15 @@ for i=1:NoOfLandmarks
     EigMeanData(i,:) = EigMeanData(i,:)';
     EigStdData(i,:) = std(Data);
     EigStdData(i,:) = EigStdData(i,:)';
-%     [V D] = eig(cov(Data));
-%     [lambda(i,:), I] = sort(diag(D),'descend');% 將特徵值 從大排到小
-%     N = length(lambda(i,:));
-%     newV = zeros(Dim, Dim, NoOfLandmarks);
-%     VV=[];
-%     for j=1:N
-%         VV=horzcat(VV,V(:,I(j:j):I(j:j)));  %根據特徵值大小  將特徵向量從大排到小
-%     end
-%     newV(:,:,i) = VV;
+    %     [V D] = eig(cov(Data));
+    %     [lambda(i,:), I] = sort(diag(D),'descend');% 將特徵值 從大排到小
+    %     N = length(lambda(i,:));
+    %     newV = zeros(Dim, Dim, NoOfLandmarks);
+    %     VV=[];
+    %     for j=1:N
+    %         VV=horzcat(VV,V(:,I(j:j):I(j:j)));  %根據特徵值大小  將特徵向量從大排到小
+    %     end
+    %     newV(:,:,i) = VV;
 end
 save('AlignedImages\EigFeatMean.mat',  'EigMeanData');
 save('AlignedImages\EigFeatStd.mat',  'EigStdData');
@@ -488,8 +513,8 @@ if isfield(handles, 'warpImg') && isfield(handles, 'X') && isfield(handles, 'Y')
     load('AlignedImages\EigFeatStd.mat');
     Template = EigMeanData(LandmarkID, :);
     TemplateStd = EigStdData(LandmarkID, :);
-%    Iter = log2(HalfWndSize)+1;
-%     pt = LogSearch(GrayIn, InitPt, HalfWndSize, sqrt(length(Template)), Template, Iter);
+    %    Iter = log2(HalfWndSize)+1;
+    %     pt = LogSearch(GrayIn, InitPt, HalfWndSize, sqrt(length(Template)), Template, Iter);
     [pt Map] = FeatureSearch(GrayIn, InitPt, HalfWndSize, sqrt(length(Template)), Template, TemplateStd, 1, 1);
     figure(1); imshow(Map);
     HighLightMark(handles);
@@ -582,10 +607,11 @@ if isfield(handles, 'warpImg') && isfield(handles, 'aligned')
     load('AlignedImages\EigFeatStd.mat');
     Template = EigMeanData;
     TemplateStd = EigStdData;
-%    Iter = log2(HalfWndSize)+1;
-%     pt = LogSearch(GrayIn, InitPt, HalfWndSize, sqrt(length(Template)), Template, Iter);
-%     [XYs Errs Xs Ys] = SearchAllLandmarks(GrayIn, InitXYs, SearchWSize, sqrt(length(Template(1,:))), Template, TemplateStd, 2);
-    [XYs Errs Xs Ys] = SearchAllLandmarksByDP(GrayIn, InitXYs, SearchWSize, sqrt(length(Template(1,:))), Template, TemplateStd);
+    %    Iter = log2(HalfWndSize)+1;
+    %     pt = LogSearch(GrayIn, InitPt, HalfWndSize, sqrt(length(Template)), Template, Iter);
+    %     [XYs Errs Xs Ys] = SearchAllLandmarks(GrayIn, InitXYs, SearchWSize, sqrt(length(Template(1,:))), Template, TemplateStd, 2);
+    Gray = cv.bilateralFilter(GrayIn, 'SigmaColor', 60, 'Diameter', 11);
+    [XYs Errs Xs Ys] = SearchAllLandmarksByDP(Gray, InitXYs, SearchWSize, sqrt(length(Template(1,:))), Template, TemplateStd);
     axes(handles.WarpAxe);
     hold off;
     HighLightMark(handles);
@@ -603,7 +629,7 @@ if isfield(handles, 'warpImg') && isfield(handles, 'aligned')
     GX = XYs(I1);
     GY = XYs(I2);
     hold on;
-%     plot(GX, GY, 'gv', 'MarkerSize', 15);
+    %     plot(GX, GY, 'gv', 'MarkerSize', 15);
     plot(GX, GY, 'gd');
     handles.Errs = Errs;
     hold off;
@@ -704,148 +730,161 @@ handles.aligned = handles.BestXYs;
 guidata(hObject, handles);
 
 
+% % --- Executes on button press in pushbutton14.
+% % Start to track the face after initialize landmarks.
+% function pushbutton14_Callback(hObject, eventdata, handles)
+% % hObject    handle to pushbutton14 (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+% if isfield(handles, 'warpImg') && isfield(handles, 'aligned')
+%     GrayI = rgb2gray(handles.warpImg);
+%     InitXYs = handles.aligned;
+%     SearchWSize = 50;
+%     load('AlignedImages\EigFeatMean.mat');
+%     load('AlignedImages\EigFeatStd.mat');
+%     Template = EigMeanData;
+%     TemplateStd = EigStdData;
+%     axes(handles.WarpAxe);
+%     kkk = 1;
+%     set(handles.text1, 'String', 'Tracking started!');
+%     set(handles.text1, 'ForegroundColor', [1 0 0]);
+%     drawnow;
+%     GrayIn = cv.bilateralFilter(GrayI, 'SigmaColor', 60, 'Diameter', 11);
+%     while SearchWSize>=4
+%         [XYs Errs Xs Ys] = SearchAllLandmarksByDP(GrayIn, InitXYs, SearchWSize, sqrt(length(Template(1,:))), Template, TemplateStd);
+%         hold off;
+%         imshow(handles.warpImg);
+%         if get(handles.checkbox2, 'value')==1
+%             HighLightMark(handles);
+%         end
+%         hold on;
+%         facialParts = [1 2 5 6 7 8 13 14 15]; %Jaw part
+%         orders = [3 3 3 3 3 3 3 3 3 4];
+%         [newXs newYs] = RefineLandmarks(facialParts, orders, Xs, Ys);
+%         LX = newXs; %XYs(1:2:length(XYs));
+%         LY = newYs; %XYs(2:2:length(XYs));
+%         if get(handles.checkbox2, 'value')==1
+%             plot(LX, LY, 'y*');
+%         end
+%         LXYs = reshape([LX;LY], [length(LX)*2 1]);
+%         %         if get(handles.checkbox2, 'value')==1
+%         %             DrawShape(LXYs, 'y', '', '-', 2);
+%         %         end
+%         handles.BestXYs = LXYs';
+%         alpha = 0.8;
+%         d = (reshape(handles.BestXYs, [1 length(handles.BestXYs)]) - handles.Mean');
+%         bound = max(handles.EigVal, zeros(size(handles.EigVal,1), size(handles.EigVal,2)));
+%         b = min(max(d*handles.EigVec,-alpha*sqrt(bound')),alpha*sqrt(bound'));
+%         k = round(128*1);
+%         ReconstructedShape = b(1:k) * handles.EigVec(:,1:k)' + handles.Mean';
+%         if get(handles.checkbox2, 'value')==1
+%             lineStyle = 'o-';
+%         else
+%             lineStyle = '-';
+%         end
+%         DrawShape(LXYs, 'y', '', lineStyle, 2);
+%         %DrawShape(ReconstructedShape, 'g', '', lineStyle, 2);
+%         handles.Recon = ReconstructedShape;
+%         handles.aligned = handles.Recon;
+%         InitXYs = handles.aligned;
+%         if (rem(kkk,3)==0)
+%             SearchWSize = SearchWSize - 2;
+%         end
+%         kkk = kkk + 1;
+%         handles.Errs = Errs;
+%         drawnow;
+%     end
+%     hold off;
+%     set(handles.text1, 'String', 'Tracking finished!');
+%     set(handles.text1, 'ForegroundColor', [0 0 1]);
+% end
+
 % --- Executes on button press in pushbutton14.
 % Start to track the face after initialize landmarks.
 function pushbutton14_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton14 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-if isfield(handles, 'warpImg') && isfield(handles, 'aligned')
-    GrayIn = rgb2gray(handles.warpImg);
-    InitXYs = handles.aligned;
-    SearchWSize = 50;
-    load('AlignedImages\EigFeatMean.mat');
-    load('AlignedImages\EigFeatStd.mat');
-    Template = EigMeanData;
-    TemplateStd = EigStdData;
-    axes(handles.WarpAxe);
-    kkk = 1;
-    set(handles.text1, 'String', 'Tracking started!');
-    set(handles.text1, 'ForegroundColor', [1 0 0]);
-    drawnow;
-    while SearchWSize>=4
-        [XYs Errs Xs Ys] = SearchAllLandmarksByDP(GrayIn, InitXYs, SearchWSize, sqrt(length(Template(1,:))), Template, TemplateStd);
-        hold off;
-        imshow(handles.warpImg);
-        if get(handles.checkbox2, 'value')==1
-            HighLightMark(handles);
-        end
-        hold on;
-        facialParts = [1 2 5 6 7 8 13 14 15]; %Jaw part
-        orders = [3 3 3 3 3 3 3 3 3 4];
-        [newXs newYs] = RefineLandmarks(facialParts, orders, Xs, Ys);
-        LX = newXs; %XYs(1:2:length(XYs));
-        LY = newYs; %XYs(2:2:length(XYs));
-        if get(handles.checkbox2, 'value')==1
-            plot(LX, LY, 'y*');
-        end
-        LXYs = reshape([LX;LY], [length(LX)*2 1]);
-%         if get(handles.checkbox2, 'value')==1
-%             DrawShape(LXYs, 'y', '', '-', 2);
-%         end
-        handles.BestXYs = LXYs';
-        alpha = 0.8;
-        d = (reshape(handles.BestXYs, [1 length(handles.BestXYs)]) - handles.Mean');
-        bound = max(handles.EigVal, zeros(size(handles.EigVal,1), size(handles.EigVal,2)));
-        b = min(max(d*handles.EigVec,-alpha*sqrt(bound')),alpha*sqrt(bound'));
-        k = round(128*1);
-        ReconstructedShape = b(1:k) * handles.EigVec(:,1:k)' + handles.Mean';
-        if get(handles.checkbox2, 'value')==1
-            lineStyle = 'o-';
-        else
-            lineStyle = '-';
-        end
-        DrawShape(LXYs, 'y', '', lineStyle, 2);
-        %DrawShape(ReconstructedShape, 'g', '', lineStyle, 2);
-        handles.Recon = ReconstructedShape;
-        handles.aligned = handles.Recon;
-        InitXYs = handles.aligned;
-        if (rem(kkk,3)==0)
-            SearchWSize = SearchWSize - 2;
-        end
-        kkk = kkk + 1;
-        handles.Errs = Errs;
-        drawnow;
-    end
-    hold off;
-    set(handles.text1, 'String', 'Tracking finished!');
-    set(handles.text1, 'ForegroundColor', [0 0 1]);
-end
+PCAGroups = [1,11]; %first: all, second: mouth
+RefinedVGs = {[1 2 5 6 7 8 13 14 15],[13 14]};
+PolyOrders = {[3 3 3 3 3 3 3 3 3 4],[3 3]};
+StartTracking(handles, PCAGroups, RefinedVGs, PolyOrders);
 
 % --- Executes on button press in pushbutton15.
 function pushbutton15_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton15 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-    GrayIn = rgb2gray(handles.warpImg);
-    InitXYs = handles.aligned;
-    SearchWSize = 30;
-    load('AlignedImages\EigFeatMean.mat');
-    load('AlignedImages\EigFeatStd.mat');
-    Template = EigMeanData;
-    TemplateStd = EigStdData;
-    axes(handles.WarpAxe);
-    kkkk = 1;
-    while SearchWSize>=8
-        [XYs Errs Xs Ys] = SearchAllLandmarksByDP(GrayIn, InitXYs, SearchWSize, sqrt(length(Template(1,:))), Template, TemplateStd);
-        handles.Errs = Errs;
-        hold off;
-        HighLightMark(handles);
-        hold on;
-        LXYs = reshape([Xs;Ys], [length(Xs)*2 1]);
-        DrawShape(LXYs, 'y', '*', '-', 1);
-        handles.BestXYs = LXYs';
-        d = (reshape(handles.BestXYs, [1 length(handles.BestXYs)]) - handles.Mean');
-        bound = max(handles.EigVal, zeros(size(handles.EigVal,1), size(handles.EigVal,2)));
-        b = min(max(d*handles.EigVec,-1*sqrt(bound')),1*sqrt(bound'));
-        k = round(128*1);
-        ReconstructedShape = b(1:k) * handles.EigVec(:,1:k)' + handles.Mean';
-%         DrawShape(ReconstructedShape, 'b', '', '-', 2);
-        handles.Recon = ReconstructedShape;
-        CurShape = reshape(handles.BestXYs, [length(handles.BestXYs) 1]);
-        Ref = reshape(handles.Recon, [length(handles.Recon) 1]);
-%Ref = reshape(handles.aligned, [length(handles.aligned) 1]);
-        Diff = (CurShape - Ref).^2;
-        diffx = Diff(1:2:length(Diff));
-        diffy = Diff(2:2:length(Diff));
-        diff = sqrt(diffx + diffy);
-        diff = reshape([diff';diff'], [1 2*length(diff)]);
-        ind = diff<=3;
-        [SortedErrs ErrInd] = sort(handles.Errs);
-        K = 20;
-        ind2 = false(1, length(ind));
-        for kkk = 1:K
-            ind2(ErrInd(kkk)*2-1) = true;
-            ind2(ErrInd(kkk)*2) = true;
-        end
-        ind = ind2&ind;
-        alpha = 1000;
-        W = diag(exp(-alpha*(diff)));
-%  W = eye(length(diff));
-%bbb = ConstrainedReconstruct(W, handles.EigVec, (handles.Recon'-handles.Mean), (CurShape-handles.Mean), -2*sqrt(abs(handles.EigVal)), 2*sqrt(abs(handles.EigVal)), ind);
-        bound = max(handles.EigVal, zeros(size(handles.EigVal,1), size(handles.EigVal,2)));
-        bbb = ConstrainedReconstruct(W, handles.EigVec, (CurShape-handles.Mean), (CurShape-handles.Mean), -5*sqrt(abs(bound)), 5*sqrt(abs(bound)), ind,  handles.Recon, 10);
-        k = round(128*1);
-        CReconstructedShape = handles.EigVec(:,1:k)*bbb(1:k) + handles.Mean;
-        handles.aligned =CReconstructedShape;
-        handles.CurCRecon = CReconstructedShape;
-        hold on;
-        DrawShape(CReconstructedShape, 'g', '', '-', 1);
-        mark = CurShape(ind);
-        spx4 = mark(1:2:length(mark));
-        spy4 = mark(2:2:length(mark));
-        hold on;
-% plot(spx4, spy4, 'go','LineWidth',2, 'markersize', 10);
-%         hold off;
-        InitXYs = handles.aligned;
-        if rem(kkkk,2)==0
-            SearchWSize = SearchWSize - 1;
-        end
-        kkkk = kkkk + 1;
-        handles.Errs = Errs;
-        drawnow;
-    end
+GrayI = rgb2gray(handles.warpImg);
+InitXYs = handles.aligned;
+SearchWSize = 30;
+load('AlignedImages\EigFeatMean.mat');
+load('AlignedImages\EigFeatStd.mat');
+Template = EigMeanData;
+TemplateStd = EigStdData;
+axes(handles.WarpAxe);
+kkkk = 1;
+GrayIn = cv.bilateralFilter(GrayI, 'SigmaColor', 60, 'Diameter', 11);
+while SearchWSize>=8
+    [XYs Errs Xs Ys] = SearchAllLandmarksByDP(GrayIn, InitXYs, SearchWSize, sqrt(length(Template(1,:))), Template, TemplateStd);
+    handles.Errs = Errs;
     hold off;
+    HighLightMark(handles);
+    hold on;
+    LXYs = reshape([Xs;Ys], [length(Xs)*2 1]);
+    DrawShape(LXYs, 'y', '*', '-', 1);
+    handles.BestXYs = LXYs';
+    d = (reshape(handles.BestXYs, [1 length(handles.BestXYs)]) - handles.Mean');
+    bound = max(handles.EigVal, zeros(size(handles.EigVal,1), size(handles.EigVal,2)));
+    b = min(max(d*handles.EigVec,-1*sqrt(bound')),1*sqrt(bound'));
+    k = round(128*1);
+    ReconstructedShape = b(1:k) * handles.EigVec(:,1:k)' + handles.Mean';
+    %         DrawShape(ReconstructedShape, 'b', '', '-', 2);
+    handles.Recon = ReconstructedShape;
+    CurShape = reshape(handles.BestXYs, [length(handles.BestXYs) 1]);
+    Ref = reshape(handles.Recon, [length(handles.Recon) 1]);
+    %Ref = reshape(handles.aligned, [length(handles.aligned) 1]);
+    Diff = (CurShape - Ref).^2;
+    diffx = Diff(1:2:length(Diff));
+    diffy = Diff(2:2:length(Diff));
+    diff = sqrt(diffx + diffy);
+    diff = reshape([diff';diff'], [1 2*length(diff)]);
+    ind = diff<=3;
+    [SortedErrs ErrInd] = sort(handles.Errs);
+    K = 20;
+    ind2 = false(1, length(ind));
+    for kkk = 1:K
+        ind2(ErrInd(kkk)*2-1) = true;
+        ind2(ErrInd(kkk)*2) = true;
+    end
+    ind = ind2&ind;
+    alpha = 1000;
+    W = diag(exp(-alpha*(diff)));
+    %  W = eye(length(diff));
+    %bbb = ConstrainedReconstruct(W, handles.EigVec, (handles.Recon'-handles.Mean), (CurShape-handles.Mean), -2*sqrt(abs(handles.EigVal)), 2*sqrt(abs(handles.EigVal)), ind);
+    bound = max(handles.EigVal, zeros(size(handles.EigVal,1), size(handles.EigVal,2)));
+    bbb = ConstrainedReconstruct(W, handles.EigVec, (CurShape-handles.Mean), (CurShape-handles.Mean), -5*sqrt(abs(bound)), 5*sqrt(abs(bound)), ind,  handles.Recon, 10);
+    k = round(128*1);
+    CReconstructedShape = handles.EigVec(:,1:k)*bbb(1:k) + handles.Mean;
+    handles.aligned =CReconstructedShape;
+    handles.CurCRecon = CReconstructedShape;
+    hold on;
+    DrawShape(CReconstructedShape, 'g', '', '-', 1);
+    mark = CurShape(ind);
+    spx4 = mark(1:2:length(mark));
+    spy4 = mark(2:2:length(mark));
+    hold on;
+    % plot(spx4, spy4, 'go','LineWidth',2, 'markersize', 10);
+    %         hold off;
+    InitXYs = handles.aligned;
+    if rem(kkkk,2)==0
+        SearchWSize = SearchWSize - 1;
+    end
+    kkkk = kkkk + 1;
+    handles.Errs = Errs;
+    drawnow;
+end
+hold off;
 
 
 % --- Executes on button press in checkbox1.
@@ -864,3 +903,26 @@ function checkbox2_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox2
+
+
+% --- Executes on selection change in listbox2.
+function listbox2_Callback(hObject, eventdata, handles)
+% hObject    handle to listbox2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns listbox2 contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from listbox2
+
+
+% --- Executes during object creation, after setting all properties.
+function listbox2_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to listbox2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: listbox controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

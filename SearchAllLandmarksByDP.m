@@ -1,8 +1,7 @@
-function [XYs Errs NewXs NewYs] = SearchAllLandmarksByDP(GrayI, InitXYs, SearchWSize, FeatWSize, Templates, TemplateStds)
+function [XYs Errs NewXs NewYs] = SearchAllLandmarksByDP(GrayImg, InitXYs, SearchWSize, FeatWSize, Templates, TemplateStds)
 global S
-[h w] = size(GrayI);
-GrayImg = cv.bilateralFilter(GrayI, 'SigmaColor', 60, 'Diameter', 11);
-p =SearchWSize/2;
+[h w] = size(GrayImg);
+p =ceil(SearchWSize/2);
 XYs = InitXYs;
 sz = floor(FeatWSize/2);
 NoOfLandmarks = length(InitXYs)/2;
@@ -18,7 +17,7 @@ for n=1:NoOfLandmarks
     Y = round(InitXYs(n*2));
     BestMatchScore = 99999999;
     N1 = [InitXYs(Neighbor(n,1)*2-1) InitXYs(Neighbor(n,1)*2)];
-    N2 =  [InitXYs(Neighbor(n,2)*2-1) InitXYs(Neighbor(n,2)*2)];
+    N2 = [InitXYs(Neighbor(n,2)*2-1) InitXYs(Neighbor(n,2)*2)];
     NormalDir = N1 - N2;
     NV = [-NormalDir(2) NormalDir(1)];
     NormalDir = 0.5*NV/norm(NV);
